@@ -1,0 +1,32 @@
+name: publish
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  buildAndPublish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+          cache: maven
+      - name: Build
+        run: mvn -B install
+      - name: Record Artifacts
+        run: for I in target/recursive-test-resource-manager-*.jar; do echo "$I" >> "$GITHUB_ARTIFACTS"; done
+      - name: Publish
+        run: mvn -B deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
